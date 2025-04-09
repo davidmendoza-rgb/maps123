@@ -75,139 +75,129 @@
 
 import 'package:flutter/material.dart';
 import '../utils/database_helper.dart';
-import 'home_screen.dart';
-import 'register_screen.dart';
+import '../screens/home_screen.dart';
+import '../screens/register_screen.dart';
 
 class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+  const LoginScreen({Key? key}) : super(key: key);
 
   @override
   _LoginScreenState createState() => _LoginScreenState();
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final TextEditingController _correoController = TextEditingController();
-  final TextEditingController _passwordController = TextEditingController();
+  final _formKey = GlobalKey<FormState>();
+  final _correoController = TextEditingController();
+  final _passwordController = TextEditingController();
 
   Future<void> _login() async {
-    final correo = _correoController.text;
-    final password = _passwordController.text;
+    if (_formKey.currentState!.validate()) {
+      final correo = _correoController.text;
+      final password = _passwordController.text;
 
-    final user = await DatabaseHelper().getUser(correo, password);
-    if (user != null) {
-      String nombre = user['nombre'];
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (context) => HomeScreen(nombre: nombre, correo: correo),
-        ),
-      );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Correo o password incorrectos',
-            style: TextStyle(color: Colors.white),
-          ),
-          backgroundColor: Colors.red,
-        ),
-      );
+      try {
+        final user = await DatabaseHelper().getUser(correo, password);
+        if (user != null && mounted) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder:
+                  (context) => HomeScreen(
+                    userId: user['id'],
+                    nombre: user['nombre'],
+                    correo: correo,
+                  ),
+            ),
+          );
+        } else if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Credenciales incorrectas'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error: ${e.toString()}'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
     }
+  }
+
+  @override
+  void dispose() {
+    _correoController.dispose();
+    _passwordController.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.blueGrey[800], // Fondo oscuro
+      backgroundColor: Colors.blueGrey[800],
       appBar: AppBar(
-        title: Text('Inicio de Sesión', style: TextStyle(color: Colors.white)),
-        backgroundColor: Colors.blueGrey[900], // AppBar más oscuro
-        automaticallyImplyLeading: false,
+        title: const Text(
+          'Inicio de Sesión',
+          style: TextStyle(color: Colors.white),
+        ),
+        backgroundColor: Colors.blueGrey[900],
       ),
       body: Padding(
         padding: const EdgeInsets.all(20.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            // Título de la pantalla
-            Text(
-              'Bienvenido, por favor ingresa tus datos',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            SizedBox(height: 30),
-            // Campo de texto para el correo electrónico
-            TextField(
-              controller: _correoController,
-              decoration: InputDecoration(
-                labelText: 'Correo electrónico',
-                labelStyle: TextStyle(color: Colors.white),
-                fillColor: Colors.blueGrey[700], // Fondo oscuro para el campo
-                filled: true,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(15),
-                  borderSide: BorderSide.none,
+        child: Form(
+          key: _formKey,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              TextFormField(
+                controller: _correoController,
+                decoration: const InputDecoration(
+                  labelText: 'Correo',
+                  labelStyle: TextStyle(color: Colors.white),
                 ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(15),
-                  borderSide: BorderSide(color: Colors.green, width: 2),
-                ),
+                validator:
+                    (value) =>
+                        value != null && value.contains('@')
+                            ? null
+                            : 'Correo inválido',
               ),
-              style: TextStyle(color: Colors.white),
-            ),
-            SizedBox(height: 20),
-            // Campo de texto para la contraseña
-            TextField(
-              controller: _passwordController,
-              decoration: InputDecoration(
-                labelText: 'Password',
-                labelStyle: TextStyle(color: Colors.white),
-                fillColor: Colors.blueGrey[700], // Fondo oscuro para el campo
-                filled: true,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(20),
-                  borderSide: BorderSide.none,
+              const SizedBox(height: 20),
+              TextFormField(
+                controller: _passwordController,
+                obscureText: true,
+                decoration: const InputDecoration(
+                  labelText: 'Contraseña',
+                  labelStyle: TextStyle(color: Colors.white),
                 ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(20),
-                  borderSide: BorderSide(color: Colors.green, width: 2),
-                ),
+                validator:
+                    (value) =>
+                        value != null && value.length >= 6
+                            ? null
+                            : 'Mínimo 6 caracteres',
               ),
-              obscureText: true,
-              style: TextStyle(color: Colors.white),
-            ),
-            SizedBox(height: 20),
-            // Botón de inicio de sesión
-            ElevatedButton(
-              onPressed: _login,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.green, // Fondo verde para el botón
-                foregroundColor: Colors.white, // Texto blanco
-                padding: EdgeInsets.symmetric(horizontal: 50, vertical: 15),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20), // Bordes redondeados
-                ),
+              const SizedBox(height: 30),
+              ElevatedButton(
+                onPressed: _login,
+                child: const Text('Iniciar Sesión'),
               ),
-              child: Text('Iniciar sesión', style: TextStyle(fontSize: 18)),
-            ),
-            SizedBox(height: 15),
-            // Enlace para registro de cuenta
-            TextButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => RegisterScreen()),
-                );
-              },
-              child: Text(
-                '¿No tienes cuenta? Regístrate aquí',
-                style: TextStyle(color: Colors.green[700]), // Verde Pistache
+              TextButton(
+                onPressed:
+                    () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const RegisterScreen(),
+                      ),
+                    ),
+                child: const Text('¿No tienes cuenta? Regístrate'),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

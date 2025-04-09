@@ -127,95 +127,66 @@
 // }
 
 import 'package:flutter/material.dart';
-import 'login_screen.dart';
-import 'admin_screen.dart';
-import 'maps.dart'; // Importamos el archivo maps.dart
+import '../screens/admin_screen.dart';
+import '../screens/login_screen.dart';
+import '../screens/maps.dart';
 
 class HomeScreen extends StatelessWidget {
+  final int userId;
   final String nombre;
-  final String correo; // Recibimos el correo
+  final String correo;
 
-  const HomeScreen({required this.nombre, required this.correo, super.key});
+  const HomeScreen({
+    Key? key,
+    required this.userId,
+    required this.nombre,
+    required this.correo,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor:
-          Colors.blueGrey[800], // Fondo oscuro para toda la pantalla
-      appBar: AppBar(
-        title: Text(
-          'Bienvenido',
-          style: TextStyle(color: Colors.white), // Texto blanco en el AppBar
-        ),
-        backgroundColor:
-            Colors.blueGrey[900], // Fondo más oscuro para el AppBar
-        automaticallyImplyLeading: false,
-      ),
+      appBar: AppBar(title: Text('Hola, $nombre')),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text(
-              'Hola, $nombre que hace?, vamos por una cervesa?',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: Colors.white, // Texto en blanco para buen contraste
-              ),
-            ),
-            SizedBox(height: 20),
-            // Mostrar el botón de administrador solo si el usuario es admin
-            if (correo == "admin@gmail.com")
-              ElevatedButton(
-                onPressed: () {
-                  Navigator.push(
+            ElevatedButton(
+              onPressed:
+                  () => Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => AdminScreen()),
-                  );
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green, // Fondo verde para el botón
-                  foregroundColor: Colors.white, // Texto blanco en el botón
-                ),
-                child: Text('Panel de Administrador'),
-              ),
-            SizedBox(height: 10),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.pushAndRemoveUntil(
-                  context,
-                  MaterialPageRoute(builder: (context) => LoginScreen()),
-                  (route) => false,
-                );
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color.fromARGB(
-                  255,
-                  118,
-                  12,
-                  211,
-                ), // Fondo rojo para el botón
-                foregroundColor: Colors.white, // Texto blanco en el botón
-              ),
-              child: Text('Cerrar sesión'),
+                    MaterialPageRoute(
+                      builder: (context) => MapsScreen(userId: userId),
+                    ),
+                  ),
+              child: const Text('Ver Mapa'),
             ),
-            SizedBox(height: 20),
-            // Botón para navegar a la pantalla de mapas
-            ElevatedButton(
-              onPressed: () {
-                // Navegar a la pantalla de MapsScreen (maps.dart)
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const MapsScreen(),
-                  ), // Asegúrate de que MapsScreen esté bien definido en maps.dart
-                );
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.blue, // Fondo azul para el botón
-                foregroundColor: Colors.white, // Texto blanco en el botón
+            if (correo == 'admin@gmail.com') ...[
+              const SizedBox(height: 20),
+              ElevatedButton(
+                onPressed:
+                    () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const AdminScreen(),
+                      ),
+                    ),
+                child: const Text('Panel Admin'),
               ),
-              child: Text('Ver Mapa'),
+            ],
+            const SizedBox(height: 40),
+            TextButton(
+              onPressed:
+                  () => Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const LoginScreen(),
+                    ),
+                  ),
+              child: const Text(
+                'Cerrar Sesión',
+                style: TextStyle(color: Colors.red),
+              ),
             ),
           ],
         ),

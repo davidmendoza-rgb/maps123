@@ -52,97 +52,62 @@
 //     );
 //   }
 // }
-
 import 'package:flutter/material.dart';
 import '../utils/database_helper.dart';
 
 class AdminScreen extends StatefulWidget {
-  const AdminScreen({super.key});
+  const AdminScreen({Key? key}) : super(key: key);
 
   @override
   _AdminScreenState createState() => _AdminScreenState();
 }
 
 class _AdminScreenState extends State<AdminScreen> {
-  List<Map<String, dynamic>> _usuarios = [];
+  List<Map<String, dynamic>> _users = [];
 
   @override
   void initState() {
     super.initState();
-    _cargarUsuarios();
+    _loadUsers();
   }
 
-  Future<void> _cargarUsuarios() async {
-    final usuarios = await DatabaseHelper().getAllUsers();
-    setState(() {
-      _usuarios = usuarios;
-    });
+  Future<void> _loadUsers() async {
+    final users = await DatabaseHelper().getAllUsers();
+    if (mounted) {
+      setState(() => _users = users);
+    }
   }
 
-  Future<void> _eliminarUsuario(int id) async {
+  Future<void> _deleteUser(int id) async {
     await DatabaseHelper().deleteUser(id);
-    _cargarUsuarios(); // Actualizar la lista después de eliminar
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Usuario eliminado con éxito'),
-        backgroundColor:
-            Colors.green, // Cambié el color de fondo para resaltar el éxito
-      ),
-    );
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Usuario eliminado'),
+          backgroundColor: Colors.green,
+        ),
+      );
+      _loadUsers();
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor:
-            Colors.blueGrey[900], // Fondo más oscuro para el AppBar
-        title: Text(
-          'Panel de Administrador',
-          style: TextStyle(color: Colors.white),
-        ),
-      ),
-      body:
-          _usuarios.isEmpty
-              ? Center(
-                child: Text(
-                  'No hay usuarios registrados',
-                  style: TextStyle(color: Colors.white, fontSize: 18),
-                ),
-              )
-              : ListView.builder(
-                itemCount: _usuarios.length,
-                itemBuilder: (context, index) {
-                  final usuario = _usuarios[index];
-                  return Card(
-                    margin: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-                    color: Colors.blueGrey[800], // Fondo oscuro para cada item
-                    child: ListTile(
-                      contentPadding: EdgeInsets.symmetric(
-                        vertical: 12,
-                        horizontal: 16,
-                      ),
-                      title: Text(
-                        usuario['correo'],
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      trailing: IconButton(
-                        icon: Icon(Icons.delete, color: Colors.red),
-                        onPressed: () => _eliminarUsuario(usuario['id']),
-                      ),
-                    ),
-                  );
-                },
-              ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          // Aquí podrías agregar la funcionalidad para añadir un usuario.
+      appBar: AppBar(title: const Text('Administrar Usuarios')),
+      body: ListView.builder(
+        itemCount: _users.length,
+        itemBuilder: (context, index) {
+          final user = _users[index];
+          return ListTile(
+            title: Text(user['correo']),
+            subtitle: Text(user['nombre']),
+            trailing: IconButton(
+              icon: const Icon(Icons.delete, color: Colors.red),
+              onPressed: () => _deleteUser(user['id']),
+            ),
+          );
         },
-        backgroundColor: Colors.green,
-        child: Icon(Icons.add),
       ),
     );
   }
